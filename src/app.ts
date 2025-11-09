@@ -7,7 +7,9 @@ import nodeRoutes from "./routes/nodeRoutes";
 import { errorHandler, notFound } from "./middleware/errorMiddleware";
 
 dotenv.config();
-connectDB();
+if (process.env.NODE_ENV !== "test") {
+  connectDB();
+}
 
 const app = express();
 app.use(express.json());

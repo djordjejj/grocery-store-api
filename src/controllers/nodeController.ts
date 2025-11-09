@@ -101,7 +101,7 @@ async function getNodeAndDescendantIds(nodeId: string): Promise<string[]> {
     { $match: { _id: objectId } },
     {
       $graphLookup: {
-        from: "nodes",              // collection name in MongoDB (lowercase + plural)
+        from: "nodes",
         startWith: "$_id",
         connectFromField: "_id",
         connectToField: "parent",
@@ -135,13 +135,11 @@ export const getEmployeesForNode = async (req: NodeIdRequest, res: Response, nex
         return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Verify node exists
     const targetNode = await Node.findById(nodeId);
     if (!targetNode) {
         return res.status(404).json({ message: "Node not found" });
     }
 
-    // Compute requester's subtree ids
     const requesterNodeId = req.user.node?.toString();
     if (!requesterNodeId) {
         return res.status(400).json({ message: "Requester has no node assigned" });
@@ -149,12 +147,10 @@ export const getEmployeesForNode = async (req: NodeIdRequest, res: Response, nex
 
     const requesterSubtree = await getNodeAndDescendantIds(requesterNodeId);
 
-    // If requester is manager or employee, they are only allowed to query nodes within their subtree
     if (!requesterSubtree.includes(nodeId)) {
       return res.status(403).json({ message: "Forbidden: node outside your subtree" });
     }
 
-    // Determine nodes to search (single node or node + descendants)
     let nodesToQuery = [nodeId];
     if (includeDesc) nodesToQuery = await getNodeAndDescendantIds(nodeId);
 
